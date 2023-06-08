@@ -1,0 +1,12 @@
+{
+    "MYSQL": {
+      "HOST": "127.0.9.1",
+      "USER": "username",
+      "PASSWORD": "password",
+      "DB": "mysql"
+    },
+    "OPENAI": {
+      "API_KEY": "sk-sadnakdjkahdkqwndjkqndkajsdlkajkdjaksldjka213213123kl1"
+    }
+  }
+  

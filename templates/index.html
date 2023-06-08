@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My SQL GPT-4 Assistant</title>
+    <style>
+        .container {
+            display: flex;
+        }
+        .left-panel {
+            width: 50%;
+        }
+        .right-panel {
+            width: 50%;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+    $(document).ready(function(){
+        $("#execute-form").submit(function(e){
+            // $('textarea[name="user_input"]').prop('disabled', true);
+            e.preventDefault();
+            $.ajax({
+                url: '/',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(data){
+                    $("#sql").text(data.sql);
+                    $("#result").text(JSON.stringify(data.result));
+                },
+                complete: function(){
+                    // $('textarea[name="user_input"]').prop('disabled', false);
+                }
+            });
+        });
+    
+        $("#dump-form").submit(function(e){
+            e.preventDefault();
+            $.ajax({
+                url: '/dump',
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(data){
+                    $("#dump").text(data);
+                }
+            });
+        });
+    });
+    </script>
+</head>
+<body>
+    <h1>My SQL GPT-4 Assistant</h1>
+    <div class="container">
+        <div class="left-panel" id="main-panel">
+            <form action="/" method="post" id="execute-form">
+                <textarea  name="user_input" placeholder="Enter what you want to do with the database"></textarea>
+                <input type="submit" value="Execute">
+            </form>
+            <hr>
+            <h2>Databases</h2>
+            <ul>
+                {% for db in databases %}
+                    <li>{{ db }}</li>
+                {% endfor %}
+            </ul>
+            <hr>
+            <!-- <h2>Database Dump</h2>
+            <form action="/dump" method="post">
+                <label>
+                    Database name:
+                    <input type="text" name="db_name">
+                </label>
+                <label>
+                    mysqldump options:
+                    <input type="text" name="dump_options" placeholder="--all --extended-insert">
+                </label>
+                <input type="submit" value="Dump">
+            </form> -->
+        </div>
+        <div class="right-panel">
+            <!-- TODO: Here you will need to handle displaying the output of the user's command -->
+        </div>
+    </div>
+    <hr>
+    <h2>SQL Query</h2>
+    <pre id="sql">{{ sql }}</pre>
+    <h2>Query Result</h2>
+    <pre id="result">{{ result }}</pre>
+</body>
+</html>
