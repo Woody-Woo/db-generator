@@ -2,71 +2,102 @@ from flask import Flask, render_template, request, jsonify
 import subprocess
 
 from config import load_config
-from sql_utils import db_connect, split_sql_script
-from gpt_utils import transform_input_to_sql
+from sql_utils import execute_sql_scripts, split_sql_script,get_databases
+from gpt_utils import transform_input_to_sql, retry_transform_input_to_sql
+import psycopg2
+from psycopg2 import extras
+from flask_httpauth import HTTPBasicAuth
+
+auth = HTTPBasicAuth()
 
 # Инициализация Flask приложения
 app = Flask(__name__)
 
 config_data = load_config()
 
+@auth.verify_password
+def verify_password(username, password):
+    if username and password:
+        return username == config_data["SITE_AUTH"]["USERNAME"] and password == config_data["SITE_AUTH"]["PASSWORD"]
+    return False
+
+
 @app.route('/', methods=['GET', 'POST'])
-def index():
-    sql = ""
-    result = []
-    if request.method == 'POST':
-        user_input = request.form['user_input']
-        # TODO: Использовать GPT-4 API для преобразования ввода пользователя в SQL
-        sql = split_sql_script(transform_input_to_sql(user_input))
-
+@auth.login_required
+def execute_sql():
+    if request.method == 'GET':
         try:
-            connection = db_connect(config_data)
-            with connection.cursor() as cursor:
-                # предположим, что sql - это список запросов, которые вы хотите выполнить
-                for query in sql:
-                    cursor.execute(query)
-                    result.append(cursor.fetchall()) # Добавляем результат каждого запроса в result
-
+            # Загрузка данных конфигурации
+            default_db_type = 'MYSQL'
+            config = load_config()
+            databases = get_databases(default_db_type,config[default_db_type])
+            return render_template('index.html', config=config[default_db_type], databases=databases)
         except Exception as e:
-            result += [str(e)]
-            # return str(e), 400
+            return str(e)
+    elif request.method == 'POST':
+        user_input = request.form.get('user_input', '')
 
-        return jsonify({'sql': sql, 'result': result})
-    else:
-        databases = get_databases()
-        return render_template('index.html', databases=databases, sql=sql, result=str(result))
+        # Получение данных из формы подключения к базе данных
+        db_type = request.form.get('db_type', '')
 
-@app.route('/dump', methods=['POST'])
-def dump():
-    db_name = request.form['db_name']
-    # TODO: добавить валидацию ввода пользователя
-    dump_options = request.form['dump_options']
+        sql = ""
+        config = {
+                "HOST": request.form.get('db_host', ''),
+                "USER": request.form.get('db_user', ''),
+                "PASSWORD": request.form.get('db_password', ''),
+                "DB": request.form.get('db_name', '')
+            }
+        
+        try:
+            databases = get_databases(db_type, config)
+            sql = transform_input_to_sql(db_type,user_input)
+            result = execute_sql_scripts(db_type, config, split_sql_script(db_type,sql))
+            
+            return jsonify({'sql': sql, 'result': result, 'config' : config, 'databases' : databases})
+        except Exception as e:
+            return jsonify({'error': str(e), 'sql': sql})
 
+@app.route('/get_default_values', methods=['POST'])
+def get_default_values():
+    db_type = request.form.get('db_type')
+    config = load_config()  # предполагается, что вы имеете функцию для чтения config.json
     try:
-        process = subprocess.Popen(
-            ['mysqldump', '-u', config_data["MYSQL"]["USER"], '-p' + config_data["MYSQL"]["PASSWORD"], db_name] + dump_options.split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        stdout, stderr = process.communicate()
-
-        if process.returncode != 0:
-            return stderr.decode(), 400
-
-        return stdout.decode()
+        db_config = config[db_type]
+        try:
+             databases = get_databases(db_type, db_config)
+        except Exception as e:
+            return jsonify(error=str(e))
+        
+        return jsonify(config=db_config, databases=databases)
     except Exception as e:
-        return str(e), 400
+        return jsonify(error= str(e))
+    
+@app.route('/retry', methods=['POST'])
+@auth.login_required
+def retry():
+    user_input = request.form.get('user_input', '')
+    ai_answer = request.form.get('ai_answer', '')
+    db_error = request.form.get('error', '')
 
-def get_databases():
+    # Получение данных из формы подключения к базе данных
+    db_type = request.form.get('db_type', '')
+
+    sql = ""
+    config = {
+            "HOST": request.form.get('db_host', ''),
+            "USER": request.form.get('db_user', ''),
+            "PASSWORD": request.form.get('db_password', ''),
+            "DB": request.form.get('db_name', '')
+        }
+    
     try:
-        connection = db_connect(config_data)
-        with connection.cursor() as cursor:
-            cursor.execute('SHOW DATABASES')
-            databases = [row['Database'] for row in cursor.fetchall()]
-            return databases
+        databases = get_databases(db_type, config)
+        sql = retry_transform_input_to_sql(db_type,user_input,ai_answer,db_error)
+        result = execute_sql_scripts(db_type, config, split_sql_script(db_type,sql))
+        
+        return jsonify({'sql': sql, 'result': result, 'config' : config, 'databases' : databases})
     except Exception as e:
-        print(e)
-        return []
+        return jsonify({'error': str(e), 'sql': sql})
 
 if __name__ == '__main__':
     app.run(debug=True)

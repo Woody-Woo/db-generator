@@ -3,29 +3,35 @@ from config import load_config
 
 openai.api_key = load_config()["OPENAI"]["API_KEY"]
 
-def configuration_ai_message():
-    return """Я хочу чтобы выполнил роль преобразования человеческого запроса, в SQL команды.
+import json
 
-Ты будеш получать текстовое описание хотелки пользователя, а возвращать должен SQL запрос, который удволетворяет этой команде.
+def load_db_config(db_type):
+    with open(f"{db_type.lower()}_config.json", 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-В ответ ты долежн возвращать всегда SQL запрос или sql запросы разделённые точкой с запятой. .  Если ты хочеш добавить комментарий - то оберни его в SQL комментарий. И ничего кроме запроса, результат твоего ответа будет без изменений передан в базу данных.
-
-Если пользователь не указывает явно имя БД, но просит создать БД, то создавай БД с учётом её содержания и можеш добавить случайных слов для уникальности
-
-Для разделения команд между собой используй точку с запятой, также используй DELIMETER для временной смены разделителя.
-
-"""
-
-def create_ai_response(text):
+def create_ai_response(db_type, text, previous_qusetion=None, previous_answer=None):
+    config = load_db_config(db_type)
     messages = []
-    messages.append({"role": "system", "content": configuration_ai_message()})
+
+    system_message = '\n'.join(config['system_message'])
+    messages.append({"role": "system", "content": system_message})
+
+    for sample in config['samples']:
+        input = sample['input']
+        output = '\n'.join(sample['output'])
+        messages.append({"role": "user", "content": input})
+        messages.append({"role": "assistant", "content": output})
+
+    if previous_answer and previous_qusetion:
+        messages.append({"role": "user", "content": previous_qusetion})
+        messages.append({"role": "assistant", "content": previous_answer})
 
     messages.append({"role": "user", "content": text})
 
     master_ai_response = openai.ChatCompletion.create(
         model='gpt-4',
         messages=messages,
-        max_tokens=150,
+        max_tokens=6000,
         n=1,
         stop=None,
         temperature=0.5,
@@ -33,10 +39,23 @@ def create_ai_response(text):
 
     return master_ai_response
 
-def transform_input_to_sql(user_input):
-    try:
-        return create_ai_response(user_input)
-    except Exception as e:
-        print(e)
-        return None
+def transform_input_to_sql(db_type, user_input): 
+    result = create_ai_response(db_type, user_input)
 
+    if "UNRESOLVABLE_QUERY" in result:
+        raise Exception("{0}".format(result.split('UNRESOLVABLE_QUERY')[1]))
+    
+    return result
+
+def retry_transform_input_to_sql(db_type, user_input, ai_answe, db_error):
+    result = create_ai_response(db_type, db_error, user_input, ai_answe)
+
+    if "UNRESOLVABLE_QUERY" in result:
+        raise Exception("{0}".format(result.split('UNRESOLVABLE_QUERY')[1]))
+    
+    return result   
+
+ 
+
+
+    
