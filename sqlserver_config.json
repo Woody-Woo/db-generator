@@ -1,0 +1,157 @@
+{
+  "system_message": [
+    "Ты должен преобразовывать текстовые задачи в SQL команды для SQL Server. Вот примеры:",
+    "- \"Создать новую таблицу с полями для имени и возраста\" -> \"CREATE TABLE new_table (name VARCHAR(255), age INT);\"",
+    "- \"Добавить новую запись в таблицу с именем John и возрастом 30\" -> \"INSERT INTO new_table (name, age) VALUES ('John',30);\"",
+    "Если информации недостаточно для формулировки SQL-запроса, верни комментарий SQL с 'UNRESOLVABLE_QUERY'. Например:",
+    "- \"Добавить запись в таблицу\" -> \"-- UNRESOLVABLE_QUERY: Не указано имя таблицы или значения для записи.\"",
+    "- \"Создать новую БД\" -> \"-- UNRESOLVABLE_QUERY: Не указано содержимое для новой БД.\"",
+    "ВАЖНО: В ответах должны быть только SQL запросы, никакого естественного языка быть не должно. Если имя БД не указано, то не используй команду USE. При создании БД, используй её содержание для имени.",
+    "Если ты хочеш добавить комментарий к SQL запросу, то используй SQL комментарии. Например: -- Извините за предыдущий ответ, вот исправленный вариант итд",
+    "Всегда форматируй SQL запросы ясно и читаемо. Используй точку с запятой для разделения команд и GO. Вообще GO используй после каждой отдельной команды",
+    "Если твой ответ вызовет ошибку при выполнении в БД, то следующим сообщением тебе будет передано содержимое этой ошибки",
+    "и ты должен будешь исправить свой предыдущий ответ, но ты должен вернуть снова только валидный SQL код. Если захочешь добавить какие-то пояснения,",
+    "то добавь их в SQL комментариях, чтобы твой ответ не вызвал ошибку при выполнении в БД."
+  ],
+  "samples": [
+    {
+      "input": "Создай бд с одной таблицей, и заполни её тестовыми данными",
+      "output": [
+        "CREATE DATABASE db_with_one_table;",
+        "GO",
+        "USE db_with_one_table;",
+        "GO",
+        "CREATE TABLE test_table (",
+        " id INT IDENTITY(1,1) PRIMARY KEY,",
+        " name NVARCHAR(255) NOT NULL,",
+        " age INT NOT NULL",
+        ");",
+        "GO",
+        "INSERT INTO test_table (name, age) VALUES",
+        " (N'John Doe', 30),",
+        " (N'Jane Smith', 28),",
+        " (N'Alice Johnson', 25),",
+        " (N'Bob Brown', 35);"
+      ]
+    },
+    {
+      "input": "Выведи список всех таблиц в бд",
+      "output": [
+        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';"
+      ]
+    },
+    {
+      "input": "добавь в бд my_database функцию которая вычисляет гипотенузу в прямоугольном треугольнике, а также добавь туда таблицу с XML полем, и добавь в эту таблицу 2 строки с данными",
+      "output": [
+        "USE my_database;",
+        "GO",
+        "CREATE FUNCTION calculate_hypotenuse(@a FLOAT, @b FLOAT) RETURNS FLOAT",
+        "AS",
+        "BEGIN",
+        " RETURN SQRT(@a * @a + @b * @b);",
+        "END;",
+        "GO",
+        "CREATE TABLE xml_table (",
+        " id INT IDENTITY(1,1) PRIMARY KEY,",
+        " xml_data XML",
+        ");",
+        "GO",
+        "INSERT INTO xml_table (xml_data) VALUES",
+        " ('<triangle><sideA>3</sideA><sideB>4</sideB></triangle>'),",
+        " ('<triangle><sideA>5</sideA><sideB>12</sideB></triangle>');"
+      ]
+    },
+    {
+      "input": "Покажи мне всех пользователей старше 18 лет из таблицы users",
+      "output": [
+        "SELECT * FROM users WHERE age > 18;"
+      ]
+    },
+    {
+      "input": "Добавь запись в таблицу",
+      "output": [
+        "-- UNRESOLVABLE_QUERY: Не указано имя таблицы или значения для записи."
+      ]
+    },
+    {
+      "input": "ыфвыфвф",
+      "output": [
+        "-- UNRESOLVABLE_QUERY: Не корректный запрос."
+      ]
+    },
+    {
+      "input": "Удали пользователя John из таблицы users",
+      "output": [
+        "DELETE FROM users WHERE name = 'John';"
+      ]
+    },
+    {
+      "input": "Создай бд ds123213 и сделай в ней две таблицы, с тестовыми полями. Заполни эти таблицы 15 записями (циклом) и выведи их.",
+      "output": [
+        "CREATE DATABASE ds123213;",
+        "GO",
+        "USE ds123213;",
+        "GO",
+        "CREATE TABLE table1 (",
+        " id INT IDENTITY(1,1) PRIMARY KEY,",
+        " text_field NVARCHAR(255)",
+        ");",
+        "GO",
+        "CREATE TABLE table2 (",
+        " id INT IDENTITY(1,1) PRIMARY KEY,",
+        " number_field INT",
+        ");",
+        "GO",
+        "DECLARE @counter INT = 1;",
+        "WHILE @counter <= 15",
+        "BEGIN",
+        " INSERT INTO table1 (text_field) VALUES (N'Test data ' + CAST(@counter AS NVARCHAR(10)));",
+        " INSERT INTO table2 (number_field) VALUES (@counter);",
+        " SET @counter = @counter + 1;",
+        "END;",
+        "GO",
+        "SELECT * FROM table1;",
+        "GO",
+        "SELECT * FROM table2;"
+      ]
+    },
+    {
+      "input": "Создай бд ds122223123111212412213 и сделай в ней две таблицы в каждой таблицы должно быть хотябы одно вычислямемое поле. Заполни эти таблицы 25 записями (циклом) и выведи их. Также создай событие в бд, которое добавляет одну запись в каждую таблицу каждую полночь.",
+      "output": [
+        "CREATE DATABASE ds122223123111212412213;",
+        "GO",
+        "USE ds122223123111212412213;",
+        "GO",
+        "CREATE TABLE table1 (",
+        " id INT IDENTITY(1,1) PRIMARY KEY,",
+        " text_field NVARCHAR(255),",
+        " text_length AS LEN(text_field)",
+        ");",
+        "GO",
+        "CREATE TABLE table2 (",
+        " id INT IDENTITY(1,1) PRIMARY KEY,",
+        " number_field INT,",
+        " double_number AS number_field * 2",
+        ");",
+        "GO",
+        "DECLARE @counter INT = 1;",
+        "WHILE @counter <= 25",
+        "BEGIN",
+        " INSERT INTO table1 (text_field) VALUES (N'Test data ' + CAST(@counter AS NVARCHAR(10)));",
+        " INSERT INTO table2 (number_field) VALUES (@counter);",
+        " SET @counter = @counter + 1;",
+        "END;",
+        "GO",
+        "SELECT * FROM table1;",
+        "GO",
+        "SELECT * FROM table2;",
+        "GO",
+        "-- SQL Server не поддерживает события напрямую, но можно использовать SQL Server Agent для создания задания, которое будет выполняться каждую полночь.",
+        "-- Необходимо вручную создать задание в SQL Server Agent с помощью SQL Server Management Studio, добавить шаг с выполнением следующего кода:",
+        "-- INSERT INTO ds122223123111212412213.dbo.table1 (text_field) VALUES (N'New data');",
+        "-- INSERT INTO ds122223123111212412213.dbo.table2 (number_field) VALUES (RAND()*100);",
+        "-- и установить расписание для выполнения задания каждую полночь."
+      ]      
+    }
+  ]
+}

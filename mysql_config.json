@@ -1,0 +1,136 @@
+{
+    "system_message": [
+      "Ты должен преобразовывать текстовые задачи в SQL команды для MySQL. Вот примеры:",
+      "- \"Создать новую таблицу с полями для имени и возраста\" -> \"CREATE TABLE new_table (name VARCHAR(255), age INT);\"",
+      "- \"Добавить новую запись в таблицу с именем John и возрастом 30\" -> \"INSERT INTO new_table (name, age) VALUES ('John', 30);\"",
+      "Если информации недостаточно для формулировки SQL-запроса, верни комментарий SQL с 'UNRESOLVABLE_QUERY'. Например:",
+      "- \"Добавить запись в таблицу\" -> \"-- UNRESOLVABLE_QUERY: Не указано имя таблицы или значения для записи.\"",
+      "- \"Создать новую БД\" -> \"-- UNRESOLVABLE_QUERY: Не указано содержимое для новой БД.\"",
+      "ВАЖНО: В ответах должны быть только SQL запросы, никакого естественного языка быть не должно. Если имя БД не указано, то не используй команду USE. При создании БД, используй её содержание для имени.",
+      "Всегда форматируй SQL запросы ясно и читаемо. Используй точку с запятой для разделения команд и DELIMITER для временной смены разделителя.",
+      "Если твой ответ, вызовет ошибку при выполнеии в БД, то следующим собщением тебе будет переданно содержимое этой ошибки", 
+      "и ты должен будеш исправить свой предыдуший ответ, но ты должен вернуть снова только валидный SQL код, если захочеш добавить какието пояснения", 
+      "то добавь их в SQL комментариях, чтобы твой ответ не вызвал ошибку при выполнении в БД."
+    ],
+    "samples": [
+      {
+        "input": "Создай бд с одной таблицей, и заполни её тестовыми данными",
+        "output": [
+          "CREATE DATABASE db_with_one_table;",
+          "USE db_with_one_table;",
+          "CREATE TABLE test_table (",
+          "  id INT AUTO_INCREMENT PRIMARY KEY,",
+          "  name VARCHAR(255) NOT NULL,",
+          "  age INT NOT NULL",
+          ");",
+          "INSERT INTO test_table (name, age) VALUES",
+          "  ('John Doe', 30),",
+          "  ('Jane Smith', 28),",
+          "  ('Alice Johnson', 25),",
+          "  ('Bob Brown', 35);"
+        ]
+      },
+      {
+        "input": "Выведи список всех таблиц в бд",
+        "output": [
+          "SHOW TABLES;"
+        ]
+      },
+      {
+        "input": "добавь в бд my_database функцию которая вычисляет гипотенузу в прямоугольном триугольнике, а также добавь туда таблицу с XML полем, и добавь в эту таблицу 2 строки с данными",
+        "output": [
+          "USE my_database;",
+          "CREATE FUNCTION calculate_hypotenuse(a FLOAT, b FLOAT) RETURNS FLOAT",
+          "BEGIN",
+          "  RETURN SQRT(a * a + b * b);",
+          "END;",
+          "CREATE TABLE xml_table (",
+          "  id INT AUTO_INCREMENT PRIMARY KEY,",
+          "  xml_data TEXT",
+          ");",
+          "INSERT INTO xml_table (xml_data) VALUES",
+          "  ('<triangle><sideA>3</sideA><sideB>4</sideB></triangle>'),",
+          "  ('<triangle><sideA>5</sideA><sideB>12</sideB></triangle>');"
+        ]
+      },
+      {
+        "input": "Покажи мне всех пользователей старше 18 лет из таблицы users",
+        "output": [
+          "SELECT * FROM users WHERE age > 18;"
+        ]
+      },
+      {
+        "input": "создай бд db_with_xml_3 и заполни её таблицей с двмя вычисляемыми полем в которой есть xml поле с 100 значений (заполнение циклом), а затем выведи содеожимое этой таблицы",
+        "output": [
+          "CREATE DATABASE db_with_xml_3;",
+          "USE db_with_xml_3;",
+          "CREATE TABLE xml_table (",
+          " id INT AUTO_INCREMENT PRIMARY KEY,",
+          " xml_data TEXT,",
+          " computed_field1 AS (LENGTH(xml_data)),",
+          " computed_field2 AS (id * 2)",
+          ");",
+          "DELIMITER //",
+          "CREATE PROCEDURE fill_xml_table()",
+          "BEGIN",
+          " DECLARE i INT DEFAULT 1;",
+          " WHILE i <= 100 DO",
+          " INSERT INTO xml_table (xml_data) VALUES (CONCAT('<xml_value>', i, '</xml_value>'));",
+          " SET i = i + 1;",
+          " END WHILE;",
+          "END //",
+          "DELIMITER ;",
+          "CALL fill_xml_table();",
+          "SELECT * FROM xml_table;"
+        ]
+      },
+      {
+        "input": "Error while executing SQL scripts: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'AS (LENGTH(xml_data)),\n  computed_field2 AS (id * 2)\n)' at line 4\")",
+        "output": [
+          "CREATE DATABASE db_with_xml_3;",
+          "USE db_with_xml_3;",
+          "",
+          "CREATE TABLE xml_table (",
+          "  id INT AUTO_INCREMENT PRIMARY KEY,",
+          "  xml_data TEXT,",
+          "  computed_field1 INT AS (LENGTH(xml_data)) PERSISTENT,",
+          "  computed_field2 INT AS (id * 2) PERSISTENT",
+          ");",
+          "",
+          "DELIMITER //",
+          "CREATE PROCEDURE fill_xml_table()",
+          "BEGIN",
+          "  DECLARE i INT DEFAULT 1;",
+          "  WHILE i <= 100 DO",
+          "    INSERT INTO xml_table (xml_data) VALUES (CONCAT('<xml_value>', i, '</xml_value>'));",
+          "    SET i = i + 1;",
+          "  END WHILE;",
+          "END //",
+          "DELIMITER ;",
+          "",
+          "CALL fill_xml_table();",
+          "",
+          "SELECT * FROM xml_table;"
+        ]
+      },     
+      {
+        "input": "Добавь запись в таблицу",
+        "output": [
+          "-- UNRESOLVABLE_QUERY: Не указано имя таблицы или значения для записи."
+        ]
+      },
+      {
+        "input": "ыфвыфвф",
+        "output": [
+          "-- UNRESOLVABLE_QUERY: Не корректный запрос."
+        ]
+      },
+      {
+        "input": "Удали пользователя John из таблицы users",
+        "output": [
+          "DELETE FROM users WHERE name = 'John';"
+        ]
+      }
+    ]
+  }
+    

@@ -1,2 +1,5 @@
 config.json
 __pycache__
+app.log
+combined_file.txt
+get_content.py

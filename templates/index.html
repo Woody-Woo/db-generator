@@ -218,6 +218,7 @@
         $(document).ajaxStart(function() {
             $(':input:enabled').prop('disabled', true);
             $("#progress").show(); // добавьте эту строку
+            $("#progress-bar").width('0%');
             $("#progress-bar").animate({ width: "85%" }, 30000);
         });
 

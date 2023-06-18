@@ -1,12 +1,27 @@
 {
-    "MYSQL": {
-      "HOST": "127.0.9.1",
-      "USER": "username",
-      "PASSWORD": "password",
-      "DB": "mysql"
-    },
-    "OPENAI": {
-      "API_KEY": "sk-sadnakdjkahdkqwndjkqndkajsdlkajkdjaksldjka213213123kl1"
-    }
+  "MYSQL": {
+    "HOST": "<mysql-server-ip-address>",
+    "USER": "<mysql-username>",
+    "PASSWORD": "<mysql-password>",
+    "DB": "<mysql-database>"
+  },
+  "POSTGRESQL": {
+    "HOST": "<postgresql-server-ip-address>",
+    "USER": "<postgresql-username>",
+    "PASSWORD": "<postgresql-password>",
+    "DB": "<postgresql-database>"
+  },
+  "SQLSERVER": {
+    "HOST": "<sqlserver-ip-address>",
+    "USER": "<sqlserver-username>",
+    "PASSWORD": "<sqlserver-password>",
+    "DB": "<sqlserver-database>"
+  },
+  "OPENAI": {
+    "API_KEY": "<openai-api-key>"
+  },
+  "SITE_AUTH": {
+    "USERNAME": "<site-auth-username>",
+    "PASSWORD": "<site-auth-password>"
   }
-  
+}
